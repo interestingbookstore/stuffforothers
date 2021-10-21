@@ -4,8 +4,8 @@ SendMode Input  ; Recommended for new scripts due to its superior speed and reli
 SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 
 
-# Made by interestingbookstore
-# Github: https://github.com/interestingbookstore/randomstuff
+; Made by interestingbookstore
+; Github: https://github.com/interestingbookstore/randomstuff
 
 ; You can toggle the shortcut by pressing alt+1
 toggle:= 0
