@@ -1,15 +1,15 @@
-from pytube import YouTube
+import sys
+try:
+    from pytube import YouTube
+except ModuleNotFoundError:
+    print('\33[31mThis Python script requires the module pytube to function, which you can install with "pip install pytube"')
+    sys.exit()
 from pathlib import Path
 from string import ascii_letters, digits
 import re
 
-# Made by interestingbookstore
-# Github: https://github.com/interestingbookstore
-# ---------------------------------------------------------
-# Version 1.2.0 Alpha October 26 2021 - Bundled Version
+# Version 1.2.0 Alpha October 31 2021 - Bundled Version
 # -----------------------------------------
-
-
 TMP_File_Save_Location = '/tmp'
 Save_Location = f'{str(Path.home())}/Downloads'  # By default the tmp files and output files are saved in the current working directory.
 #     (This should be a folder)                    Simply edit this line if you'd like to save them somewhere else.
@@ -25,6 +25,8 @@ ask_save_location = False  # Say you're weird and want to be prompted for the sa
 #                            video; just set this to True. Otherwise, False.
 
 formatting = True  # By default, this script uses ANSI escape sequences to add color and text effects to certain elements.
+
+
 #                    Normally, these wouldn't actually be visible, and they'd simply modify how the text looks. However, applications
 #                    (like Windows's Command Prompt) still render them (and they don't actually change anything there), which looks a bit
 #                    odd. So, if you're in a similar situation, or you simply dislike ANSI escape sequences, set this variable to "False"
@@ -35,15 +37,13 @@ def _filename_process(filename):
     # regardless), add whatever processing you want to the filename here.
     # Example:
     # filename = filename.replace(' ', '_')
-    good_characters = ascii_letters + digits + ' _'
+    good_characters = ascii_letters + digits + '_'
     filename2 = ''
     for i in filename:
         if i in good_characters:
             filename2 += i
-    filename2 = filename2.replace(' ', '_')
-    while '__' in filename2:
-        filename2 = filename2.replace('__', '_')
     return filename2
+
 
 # When choosing a filename, you can specify a couple "dynamic" strings.
 # These include:
@@ -55,10 +55,7 @@ def _filename_process(filename):
 # {length} -> The video's length (in seconds)
 
 # If these are in the filename, they're replaced with the video's value for them.
-# -----------------------------------------
-# UILibrary  -----------  v  ----------------  v  ------------------------------------------
-
-
+# ----- v -----  UILibrary  ----- v -------------------------
 
 import pickle
 from sys import exit as s_exit, argv
@@ -77,36 +74,76 @@ except ModuleNotFoundError:
     from tkinter import Tk
 
     tk = Tk()
+    tk.withdraw()
 
 # Made by interestingbookstore
 # Github: https://github.com/interestingbookstore/randomstuff
+# -----------------------------------------------------------------------
+# Version released on October 31 2021  Happy Halloween!
 # ---------------------------------------------------------
 
 txt_save_folder = r''
 
 
 # ---------------------------------------------------------
-
 # With this library, you can edit a dictionary, which will save its information, even if you close and rerun the python script.
 # It accomplishes this through a pickle file, which has to be saved somewhere.
 # If the variable above is left as an empty string, it'll be saved in the current directory. Otherwise,
 # it'll be saved in the folder above. (no slash at the end)
 
-def large_number_formatter(number, type='notation', decimal_places=2):
+def large_number_formatter(number, decimal_places=2):
+    num = str(number)
+    thousands = (len(num) - 1) // 3
+    notations = 'K', 'M', 'B', 'T', 'Q'
+    return str(round(number / 10 ** (thousands * 3), decimal_places)) + notations[thousands - 1]
+
+
+def time_formatter(seconds, add_and=True):
+    if seconds == 0:
+        return '0 seconds'
+
+    units_singular = ['minute', 'hour', 'day', 'week', 'month', 'year', 'decade', 'century']
+    units = ['minutes', 'hours', 'days', 'weeks', 'months', 'years', 'decades', 'centuries']
+    seconds_in_unit = [60, 3600, 86400, 604800, 18144000, 217728000, 2177280000, 21772800000]
+    units_singular = list(reversed(units_singular))
+    units = list(reversed(units))
+    seconds_in_unit = list(reversed(seconds_in_unit))
+
+    result = ''
+    seconds = seconds
+    while seconds >= seconds_in_unit[-1]:
+        for index, i in enumerate(seconds_in_unit):
+            idk = seconds // i
+            if idk >= 1:
+                if idk < 2:
+                    result += f'{idk} {units_singular[index]}, '
+                else:
+                    result += f'{idk} {units[index]}, '
+                seconds %= i
+                break
+    if seconds > 0:
+        if add_and:
+            if result != '':
+                if result[-2:] == ', ':
+                    result = result[:-2] + ' '
+                result += 'and '
+        if seconds < 2:
+            result += f'{seconds} second'
+        else:
+            result += f'{seconds} seconds'
+    else:
+        result = result[:-2]
+    return result
+
+
+def add_comma_to_number(number):
     num = str(number)
     length = len(num)
     thousands = (len(num) - 1) // 3
-    if type == ',':
-        for i in range(thousands):
-            i += 1
-            num = num[:length - i * 3] + ',' + num[length - i * 3:]
-        return num
-    else:
-        notations = 'K', 'M', 'B', 'T', 'Q'
-        return str(round(number / 10 ** (thousands * 3), decimal_places)) + notations[thousands - 1]
-
-
-# def duration_formatter(duration, hi)
+    for i in range(thousands):
+        i += 1
+        num = num[:length - i * 3] + ',' + num[length - i * 3:]
+    return num
 
 
 def check_type(val, validation):
@@ -173,14 +210,14 @@ class UI:
                 print('\r' + description + self.style['progress_bar_done'] + ' Done!')
             else:
                 if progress == 0:
-                    time_remaining = ''
+                    time_remaining = None
                 else:
-                    time_remaining = f'{round((time() - self._start_time) * (total - progress) / progress)} seconds left'
+                    time_remaining = round((time() - self._start_time) * (total - progress) / progress)
                 fraction = progress / total
                 percent = int(fraction * 100)
                 amount = int(fraction * length)
                 if percent != self._percent:
-                    print('\r' + f"{description} {self.style['progress_bar_color']}{self.style['progress_bar'] * amount}{self.style['reset']}{' ' * (length - amount)} {percent}%  {time_remaining}", end='')
+                    print('\r' + f"{description} {self.style['progress_bar_color']}{self.style['progress_bar'] * amount}{self.style['reset']}{' ' * (length - amount)} {percent}%  {time_formatter(time_remaining) + ' left' if time_remaining is not None else ''}", end='')
                     self._percent = percent
                     if percent >= 100:
                         print('\r' + description + self.style['progress_bar_done'] + ' Done!' + self.style['reset'])
@@ -301,18 +338,23 @@ class UI:
         if pyperclip is not None:
             pyperclip.copy(text)
         else:
-            raise ModuleNotFoundError('UILibrary doesn\'t currently support pasting to clipboard without the module "pyperclip"')
+            tk.clipboard_append(text)
 
     def set_default(self, name, default_value):
         if name not in self.save_info.stuff:
             self.save_info[name] = default_value
 
-    def remove_invalid_filename_characters(self, path, window_only=True):
-        if self.os == 'windows' or not window_only:
-            bad_characters = r'<>:"|?*'
+    def check_if_file_exists(self, path):
+        if Path(path).is_file():
+            return True
+        return False
+
+    def remove_invalid_filename_characters(self, path, windows_only=True):
+        if self.os == 'windows' or not windows_only:
+            bad_characters = '<>:"|?*'
             for i in bad_characters:
                 if ':\\' in path:
-                    path = path.split(':\\', 1)[0] + ':\\' + path.split(':\\', 1)[1].replace(i, '')  # A ":" is only allowed in the "C:..." section.
+                    path = path.split(':\\', 1)[0] + ':\\' + path.split(':\\', 1)[1].replace(i, '')  # A ":" is only allowed in the "C:..." section
                 else:
                     path = path.replace(i, '')
         return path
@@ -322,12 +364,8 @@ class UI:
             path = path.replace('/', '\\')
         return path
 
-
-    def get_unique_file(self, path, invalid_characters='remove', format_slashes=True):
-        if not (invalid_characters == 'remove' or invalid_characters == 'keep'):
-            raise Exception(f'The invalid characters parameter should be either "remove" or "keep", but "{invalid_characters}" was given.')
-
-        if Path(path).is_file():
+    def get_unique_file(self, path, remove_invalid_characters=True, format_slashes_for_windows=True):
+        if self.check_if_file_exists(path):
             filename = '.'.join(path.split('.')[:-1])
             extension = '.' + path.split('.')[-1]
 
@@ -338,11 +376,10 @@ class UI:
                 num += 1
 
             path = filename + filename_addition.replace('*', str(num)) + extension
-        if invalid_characters == 'remove':
+        if remove_invalid_characters:
             path = self.remove_invalid_filename_characters(path)
-        if format_slashes:
+        if format_slashes_for_windows:
             path = self.format_slashes_for_windows(path)
-
         return path
 
     def OptionsList(self, options=()):
@@ -354,8 +391,18 @@ class UI:
     def get_console_arguments(self):
         return argv[1:]
 
-    def run_console_command(self, command):
-        run_command(command)
+    def run_terminal_command(self, command, print_output=False):
+        if not print_output:
+            return subprocess.run(command, capture_output=True, universal_newlines=True, shell=True).stdout.strip('\n')
+        else:
+            subprocess.run(command, shell=True)
+
+    def check_if_terminal_command_exists(self, command):
+        try:
+            self.run_terminal_command(command)
+            return True
+        except FileNotFoundError:
+            return False
 
     def open_path(self, path):
         path = path.replace('\\', '/')
@@ -364,7 +411,7 @@ class UI:
         elif self.os == 'macos':
             subprocess.Popen(['open', path])
         elif self.os == 'linux':
-            run_command(f'gio open "{path}"')  # Origionally    subprocess.Popen(['xdg-open', path])    was used, but gio is faster, and it doesn't print a bunch of errors...
+            run_command(f'gio open "{path}"')
 
     def ask(self, question, validation=str, extra=None, end=': '):
         while True:
@@ -433,16 +480,7 @@ Separate them with spaces, include a backslash directly before one ("...\\ ...")
                     except validation[1]:
                         self.error_print(validation[2])
 
-
-
-
-
-
-
-
-
-
-# ------------------------------------------
+# ------------------------------------------------------
 ui = UI(formatting=formatting)
 c = ui.colors
 ui.style['ask_color'] = c.red
@@ -451,6 +489,10 @@ ui.style['progress_bar_color'] = c.red
 
 stream_size = 0
 currently_downloading = 'video'
+
+if not ui.check_if_terminal_command_exists('ffmpeg'):
+    print(f"{ui.colors.red}This python script requires {ui.colors.bold}ffmpeg{ui.colors.reset}{ui.colors.red} to stitch the final video together, which you\ndon't seem to have installed. You can find it on FFmpeg's official website; {ui.colors.bold}ffmpeg.org")
+    ui.quit()
 
 
 def download_progress(stream, chunk, bytes_remaining):
@@ -579,5 +621,8 @@ for video in final_videos:
         name = ui.get_unique_file(f'{Save_Location}/{filename}.mp4')
         short_name = filename + '.mp4'
 
-        ui.run_console_command(f'ffmpeg -loglevel warning -i "{TMP_File_Save_Location}/tmp_download_video.{v_extension}" -i "{TMP_File_Save_Location}/tmp_download_audio.{a_extension}" -c copy "{name}"')
-        print(f"Video saved as {short_name} at {name}")
+        ui.run_terminal_command(f'ffmpeg -loglevel warning -i "{TMP_File_Save_Location}/tmp_download_video.{v_extension}" -i "{TMP_File_Save_Location}/tmp_download_audio.{a_extension}" -c copy "{name}"')
+        if ui.check_if_file_exists(name):
+            print(f"Video saved as {short_name} at {name}")
+        else:
+            print(f"The video file wasn't successfully saved, :(")
