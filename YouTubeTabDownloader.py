@@ -1,11 +1,11 @@
 from UILibrary import *
-from pytube import YouTube, Playlist, Channel
+from pytube import YouTube, Playlist, Channel, exceptions
 from datetime import date
 
 # Made by interestingbookstore
 # Github: https://github.com/interestingbookstore/randomstuff
 # -----------------------------------------------------------------------
-# Version released on January 3 2022
+# Version released on January 3 2022 (V2)
 # ---------------------------------------------------------
 
 # -----------------------------------------------------------------------------------------------------------------------------------
@@ -49,7 +49,7 @@ for url in ui.get_clipboard().split('\n'):
     if remove_https:
         url = url.lstrip('https://')
     surl = url.lstrip('https://').lstrip('www.').rstrip('/')  # Standardized URL, only used for comparing with reference URLs
-    if (surl.startswith(youtube_reference_url) or surl.startswith(share_youtube_reference_url)) and '?t=' in surl:  # Standardize by removing the "start at" time if present
+    if (surl.startswith(youtube_reference_url) and '&t=' in surl) or (surl.startswith(share_youtube_reference_url) and '?t=' in surl):  # Standardize by removing the "start at" time if present
         surl = surl[:surl.index('?t=')]
     if surl.startswith(user_reference_url):
         surl = c_reference_url + surl[len(user_reference_url):]
@@ -84,7 +84,10 @@ if len(youtube_tabs) > 0:
     ui.progress_bar.update(0, len(youtube_tabs), 'Converting YouTube tabs')
 for index, i in enumerate(youtube_tabs):
     yt = YouTube(i)
-    youtube_tabs[index] = yt_item_format.replace('{title}', yt.title).replace('{author}', yt.author).replace('{url}', i)
+    try:
+        youtube_tabs[index] = yt_item_format.replace('{title}', yt.title).replace('{author}', yt.author).replace('{url}', i)
+    except exceptions.VideoUnavailable:
+        pass
     ui.progress_bar.update(index + 1, len(youtube_tabs), 'Converting YouTube tabs', progress_bar_length)
 
 if len(channel_tabs) > 0:
@@ -106,7 +109,10 @@ for index, url in enumerate(video_playlist_tabs):
     full_url, url = url, url.split('&list=')
     vid_yt = YouTube(url[0])
     list_yt = Playlist(playlist_reference_url + url[1])
-    video_playlist_tabs[index] = video_playlist_item_format.replace('{video_title}', vid_yt.title).replace('{author}', vid_yt.author).replace('{playlist_title}', list_yt.title).replace('{owner}', list_yt.owner).replace('{url}', full_url)
+    try:
+        video_playlist_tabs[index] = video_playlist_item_format.replace('{video_title}', vid_yt.title).replace('{author}', vid_yt.author).replace('{playlist_title}', list_yt.title).replace('{owner}', list_yt.owner).replace('{url}', full_url)
+    except exceptions.VideoUnavailable:
+        pass
     ui.progress_bar.update(len(playlist_tabs) + index + 1, len(playlist_tabs) + len(video_playlist_tabs), 'Converting playlist tabs', progress_bar_length)
 
 # -------------------------------------------------------------
