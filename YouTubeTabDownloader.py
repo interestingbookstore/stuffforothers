@@ -1,11 +1,12 @@
 from UILibrary import *
 from pytube import YouTube, Playlist, Channel, exceptions
 from datetime import date
+from threading import Thread
 
 # Made by interestingbookstore
 # Github: https://github.com/interestingbookstore/randomstuff
 # -----------------------------------------------------------------------
-# Version released on January 3 2022 (v3)
+# Version released on January 4 2022
 # ---------------------------------------------------------
 
 # -----------------------------------------------------------------------------------------------------------------------------------
@@ -80,34 +81,26 @@ if len(youtube_tabs) == 0 and len(channel_tabs) == 0 and len(playlist_tabs) == 0
             ui.quit()
 
 # -------------------------------------------------------------
-
-if len(youtube_tabs) > 0:
-    print('Converting YouTube tabs, this might take a while...')
-    ui.progress_bar.update(0, len(youtube_tabs), 'Converting YouTube tabs')
-for index, i in enumerate(youtube_tabs):
-    yt = YouTube(i)
+def convert_youtube_tabs(url, index):
+    global youtube_tabs
+    yt = YouTube(url)
     try:
-        youtube_tabs[index] = yt_item_format.replace('{title}', yt.title).replace('{author}', yt.author).replace('{url}', i)
+        youtube_tabs[index] = yt_item_format.replace('{title}', yt.title).replace('{author}', yt.author).replace('{url}', url)
     except exceptions.VideoUnavailable:
         pass
-    ui.progress_bar.update(index + 1, len(youtube_tabs), 'Converting YouTube tabs', progress_bar_length)
 
-if len(channel_tabs) > 0:
-    print('Converting channel tabs, this might take a while...')
-    ui.progress_bar.update(0, len(channel_tabs), 'Converting channel tabs', progress_bar_length)
-for index, i in enumerate(channel_tabs):
-    yt = Channel(i)
-    channel_tabs[index] = channel_item_format.replace('{name}', yt.channel_name).replace('{url}', i)
-    ui.progress_bar.update(index + 1, len(channel_tabs), 'Converting channel tabs')
+def convert_channel_tabs(url, index):
+    global channel_tabs
+    yt = Channel(url)
+    channel_tabs[index] = channel_item_format.replace('{name}', yt.channel_name).replace('{url}', url)
 
-if len(playlist_tabs) > 0:
-    print('Converting playlist tabs, this might take a while...')
-    ui.progress_bar.update(0, len(playlist_tabs) + len(video_playlist_tabs), 'Converting playlist tabs')
-for index, i in enumerate(playlist_tabs):
-    yt = Playlist(i)
-    playlist_tabs[index] = playlist_item_format.replace('{title}', yt.title).replace('{owner}', yt.owner).replace('{url}', i)
-    ui.progress_bar.update(index + 1, len(playlist_tabs) + len(video_playlist_tabs), 'Converting playlist tabs', progress_bar_length)
-for index, url in enumerate(video_playlist_tabs):
+def convert_playlist_tabs(url, index):
+    global playlist_tabs
+    yt = Playlist(url)
+    playlist_tabs[index] = playlist_item_format.replace('{title}', yt.title).replace('{owner}', yt.owner).replace('{url}', url)
+
+def convert_video_playlist_tabs(url, index):
+    global video_playlist_tabs
     full_url, url = url, url.split('&list=')
     vid_yt = YouTube(url[0])
     list_yt = Playlist(playlist_reference_url + url[1])
@@ -115,7 +108,22 @@ for index, url in enumerate(video_playlist_tabs):
         video_playlist_tabs[index] = video_playlist_item_format.replace('{video_title}', vid_yt.title).replace('{author}', vid_yt.author).replace('{playlist_title}', list_yt.title).replace('{owner}', list_yt.owner).replace('{url}', full_url)
     except exceptions.VideoUnavailable:
         pass
-    ui.progress_bar.update(len(playlist_tabs) + index + 1, len(playlist_tabs) + len(video_playlist_tabs), 'Converting playlist tabs', progress_bar_length)
+
+threads = []
+
+for index, url in enumerate(youtube_tabs):
+    threads.append(Thread(target=convert_youtube_tabs, args=[url, index]))
+for index, url in enumerate(channel_tabs):
+    threads.append(Thread(target=convert_channel_tabs, args=[url, index]))
+for index, url in enumerate(playlist_tabs):
+    threads.append(Thread(target=convert_playlist_tabs, args=[url, index]))
+for index, url in enumerate(video_playlist_tabs):
+    threads.append(Thread(target=convert_video_playlist_tabs, args=[url, index]))
+
+for thread in threads:
+    thread.start()
+for thread in threads:
+    thread.join()
 
 # -------------------------------------------------------------
 save_file_path = ui.get_unique_file(txt_save_location)
