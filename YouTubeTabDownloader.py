@@ -5,7 +5,7 @@ from datetime import date
 # Made by interestingbookstore
 # Github: https://github.com/interestingbookstore/randomstuff
 # -----------------------------------------------------------------------
-# Version released on January 3 2022 (V2)
+# Version released on January 3 2022 (v3)
 # ---------------------------------------------------------
 
 # -----------------------------------------------------------------------------------------------------------------------------------
@@ -49,8 +49,10 @@ for url in ui.get_clipboard().split('\n'):
     if remove_https:
         url = url.lstrip('https://')
     surl = url.lstrip('https://').lstrip('www.').rstrip('/')  # Standardized URL, only used for comparing with reference URLs
-    if (surl.startswith(youtube_reference_url) and '&t=' in surl) or (surl.startswith(share_youtube_reference_url) and '?t=' in surl):  # Standardize by removing the "start at" time if present
-        surl = surl[:surl.index('?t=')]
+    if surl.startswith(youtube_reference_url) and '&t=' in surl:  #         ]
+        surl = surl[:surl.index('&t=')]  #                                  | Standardize by removing the "start at" time if present
+    elif surl.startswith(share_youtube_reference_url) and '?t=' in surl:  # |
+        surl = surl[:surl.index('?t=')]  #                                  ]
     if surl.startswith(user_reference_url):
         surl = c_reference_url + surl[len(user_reference_url):]
     elif surl.startswith(channel_reference_url):
